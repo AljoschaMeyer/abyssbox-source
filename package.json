@@ -7,10 +7,11 @@
 	"homepage": "https://www.beepbox.co",
 	"type": "module",
 	"scripts": {
-		"build": "npm run build-player && npm run build-editor",
+		"build": "npm run build-player && npm run build-editor && npm run build-playlist",
 		"build-player": "bash ./compile_beepbox_player.sh",
 		"build-editor": "bash ./compile_beepbox_editor.sh",
-		"build-app": "bash ./compile_beepbox_app.sh"
+		"build-app": "bash ./compile_beepbox_app.sh",
+		"build-playlist": "bash ./compile_beepbox_playlist.sh"
 	},
 	"repository": {
 		"type": "git",
