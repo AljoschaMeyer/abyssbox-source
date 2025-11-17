@@ -20,6 +20,12 @@ declare global {
  */
 const epsilon: number = (1.0e-24); // For detecting and avoiding float denormals, which have poor performance.
 
+const logsCurve = [];
+for (let i = 0; i < 32; i++) {
+    const x = 1 + 1.711 * (i / 32);
+    logsCurve.push(1 - Math.log(x));
+}
+
 // For performance debugging:
 //let samplesAccumulated: number = 0;
 //let samplePerformance: number = 0;
@@ -9278,6 +9284,19 @@ export class Synth {
      */
     public songFinishedCallback: () => void = () => { };
 
+    /**
+     * If this is >= 1, start fading out after this many loops.
+     */
+    public fadeoutLoopCount = -1;
+    /**
+     * Duration of the fadeout in milliseconds.
+     */
+    public fadeoutMilliseconds = 1;
+    /**
+     * How often we have looped (starts at 0).
+     */
+    public currentLoopCount = 0;
+
     private static readonly fmSynthFunctionCache: Dictionary<Function> = {};
     private static readonly fm6SynthFunctionCache: Dictionary<Function> = {};
     private static readonly effectsFunctionCache: Function[] = Array(1 << 7).fill(undefined); // keep in sync with the number of post-process effects.
@@ -9540,6 +9559,7 @@ export class Synth {
                 }
                 if (bar >= endBar) {
                     ended = true;
+                    this.currentLoopCount = 0;
                     this.songFinishedCallback();
                 }
 
@@ -9615,11 +9635,15 @@ export class Synth {
                 this.gainNode.gain.exponentialRampToValueAtTime(0.01, 0.001);
             }
 
-            this.scriptNode.disconnect(this.audioCtx.destination);
-            this.scriptNode = null;
-            if (this.audioCtx.close) this.audioCtx.close(); // firefox is missing this function?
-            this.audioCtx = null;
-            this.gainNode = null;
+            try {
+                this.scriptNode.disconnect(this.audioCtx.destination);
+                this.scriptNode = null;
+                if (this.audioCtx.close) this.audioCtx.close(); // firefox is missing this function?
+                this.audioCtx = null;
+                this.gainNode = null;
+            } catch (_) {
+                // This is fine.
+            }
         }
 
 
@@ -9655,6 +9679,16 @@ export class Synth {
             }
         }
         this.preferLowerLatency = false;
+    }
+
+    public fadeout(): void {
+        this.gainNode.gain.setValueCurveAtTime(logsCurve, 0, this.fadeoutMilliseconds / 1000);
+        // this.gainNode.gain.linearRampToValueAtTime(0.01, this.fadeoutMilliseconds / 1000);
+        setTimeout(() => {
+            this.pause();
+            this.currentLoopCount = 0;
+            this.songFinishedCallback();
+        }, this.fadeoutMilliseconds);
     }
 
     public startRecording(): void {
@@ -9977,7 +10011,17 @@ export class Synth {
 
                 this.prevBar = this.bar;
                 this.bar = this.getNextBar();
-                if (this.bar <= this.prevBar && this.loopRepeatCount > 0) this.loopRepeatCount--;
+
+                if (this.bar <= this.prevBar) {
+                    this.currentLoopCount += 1;
+
+                    if (this.currentLoopCount === this.fadeoutLoopCount) {
+                        this.fadeout();
+                    }
+                }
+                if (this.bar <= this.prevBar && this.loopRepeatCount > 0) {
+                    this.loopRepeatCount--;
+                }
 
             }
             if (this.bar >= song.barCount) {
@@ -9985,6 +10029,7 @@ export class Synth {
                 if (this.loopRepeatCount != -1) {
                     ended = true;
                     this.pause();
+                    this.currentLoopCount = 0;
                     this.songFinishedCallback();
                 }
             }
@@ -10344,7 +10389,18 @@ export class Synth {
                                 } else {
                                     this.prevBar = this.bar;
                                     this.bar = this.getNextBar();
-                                    if (this.bar <= this.prevBar && this.loopRepeatCount > 0) this.loopRepeatCount--;
+
+                                    if (this.bar <= this.prevBar) {
+                                        this.currentLoopCount += 1;
+
+                                        if (this.currentLoopCount === this.fadeoutLoopCount) {
+                                            this.fadeout();
+                                        }
+                                    }
+                                    if (this.bar <= this.prevBar && this.loopRepeatCount > 0) {
+                                        this.loopRepeatCount--;
+
+                                    }
 
                                     if (this.bar >= song.barCount) {
                                         this.bar = 0;
@@ -10352,6 +10408,7 @@ export class Synth {
                                             ended = true;
                                             this.resetEffects();
                                             this.pause();
+                                            this.currentLoopCount = 0;
                                             this.songFinishedCallback();
                                         }
                                     }

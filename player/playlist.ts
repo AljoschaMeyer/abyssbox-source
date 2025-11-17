@@ -862,6 +862,7 @@ type PlaylistSong = {
     domNode: HTMLElement;
     songdata: string;
     repetitions: number;
+    fadeout: number;
 }
 
 /*
@@ -869,6 +870,7 @@ type PlaylistSong = {
  * 
  * - `data-beepbox-song`: the song, encoded as a string.
  * - `data-beepbox-repetitions`: the number of repetitions for the repeated section of the song. Defaults to `-1`, i.e., infinite looping.
+ * - `data-beepbox-fadeout`: duration of the song fadeout in milliseconds, or -1 if there is no fadeout.
  */
 
 const playlist = [];
@@ -880,6 +882,7 @@ document.querySelectorAll('[data-beepbox-song]').forEach((songDom_) => {
         domNode: songDom,
         songdata: songDom.dataset.beepboxSong,
         repetitions: parseInt(songDom.dataset.beepboxRepetitions),
+        fadeout: songDom.dataset.beepboxFadeout ? parseInt(songDom.dataset.beepboxFadeout) : -1,
     }
 
     playlist.push(song);
@@ -889,7 +892,6 @@ let currentSongIndex = 0;
 
 function selectSongByIndex(index: number) {
     const oldDom = playlist[currentSongIndex].domNode;
-    console.log(oldDom);
     oldDom.classList.remove("currentlyPlaying");
 
     currentSongIndex = index;
@@ -900,7 +902,9 @@ function selectSongByIndex(index: number) {
     newDom.scrollIntoView();
 
     loadSong(newSong.songdata, false);
-    synth.loopRepeatCount = newSong.repetitions;
+    synth.loopRepeatCount = newSong.fadeout === -1 ? newSong.repetitions : -1;
+    synth.fadeoutLoopCount = newSong.fadeout === -1 ? -1 : newSong.repetitions;
+    synth.fadeoutMilliseconds = newSong.fadeout;
     renderTimeline();
 }
 
