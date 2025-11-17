@@ -1,16 +1,15 @@
 
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Dictionary, DictionaryArray, EnvelopeType, InstrumentType, Transition, Chord, Envelope, Config, sampleLoadEvents, SampleLoadedEvent } from "../synth/SynthConfig";
+import { Dictionary, DictionaryArray, EnvelopeType, InstrumentType, Transition, Chord, Envelope, Config } from "../synth/SynthConfig";
 import { ColorConfig } from "../editor/ColorConfig";
 import { NotePin, Note, Pattern, Instrument, Channel, Synth, Song } from "../synth/synth";
 import "./style";
-import { oscilascopeCanvas } from "../global/Oscilascope";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
 import { SongPlayerLayout } from "./Layout";
 
-const { a, button, div, h1, input, canvas, form, label, h2 } = HTML;
-const { svg, circle, rect, path } = SVG;
+const { button, div, h1, input, form, label, h2 } = HTML;
+const { svg, rect, path } = SVG;
 
 const isMobile: boolean = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|android|ipad|playbook|silk/i.test(navigator.userAgent);
 
@@ -24,16 +23,8 @@ let pauseButtonDisplayed: boolean = false;
 let animationRequest: number | null;
 let zoomEnabled: boolean = false;
 let timelineWidth: number = 1;
-let outVolumeHistoricTimer: number = 0;
-let outVolumeHistoricCap: number = 0;
 
 const synth: Synth = new Synth();
-const oscilascope: oscilascopeCanvas = new oscilascopeCanvas(canvas({ width: isMobile ? 144 : 288, height: isMobile ? 32 : 64, style: `border:2px solid ${ColorConfig.uiWidgetBackground}; overflow: hidden;`, id: "oscilascopeAll" }), isMobile ? 1 : 2);
-const showOscilloscope: boolean = getLocalStorage("showOscilloscope") != "false";
-if (!showOscilloscope) {
-    oscilascope.canvas.style.display = "none";
-    synth.oscEnabled = false;
-}
 
 const closePrompt: HTMLButtonElement = button({ class: "closePrompt", style: "width: 32px; height: 32px; float: right; position: absolute;top: 8px;right: 8px;" });
 const _okayButton: HTMLButtonElement = button({ class: "okayButton", style: "width:45%; height: 32px;" }, "Okay");
@@ -198,14 +189,6 @@ const layoutContainer: HTMLDivElement = div({ class: "prompt noSelection", style
 
 let titleText: HTMLHeadingElement = h1({ class: "songTitle", style: "flex-grow: 1; margin: 0 1px; margin-left: 10px; overflow: hidden;" }, "");
 let layoutStuffs: HTMLButtonElement = button({ class: "songPlayerLayoutsButton", style: "margin: 0 4px; height: 42px; width: 90px;" }, "Layouts");
-let editLink: HTMLAnchorElement = a({ target: "_top", style: "margin: 0 4px;" }, "✎ Edit");
-let copyLink: HTMLAnchorElement = a({ href: "javascript:void(0)", style: "margin: 0 4px;" }, "⎘ Copy URL");
-let shareLink: HTMLAnchorElement = a({ href: "javascript:void(0)", style: "margin: 0 4px;" }, "⤳ Share");
-let fullscreenLink: HTMLAnchorElement = a({ target: "_top", class: "fullscreenLink", style: "margin: 0 4px;" }, "⇱ Fullscreen");
-let shortenSongLink: HTMLAnchorElement = a({ href: "javascript:void(0)", target: "_top", class: "shortUrlLink", style: "margin: 0 4px;" }, "… Shorten URL");
-//let hideUrlButton: HTMLAnchorElement = a({ href:"javascript:void(0)", target: "_top", style: "margin: 0 4px;"}, "Hide URL");
-
-
 
 let draggingPlayhead: boolean = false;
 let draggingTimelineBar: boolean = false;
@@ -213,10 +196,6 @@ const playButton: HTMLButtonElement = button({ style: "width: 100%; height: 100%
 const playButtonContainer: HTMLDivElement = div({ class: "playButtonContainer", style: "flex-shrink: 0; display: flex; padding: 2px; width: 80px; height: 100%; box-sizing: border-box; align-items: center;" },
     playButton,
 );
-const loopIcon: SVGPathElement = path({ d: "M 4 2 L 4 0 L 7 3 L 4 6 L 4 4 Q 2 4 2 6 Q 2 8 4 8 L 4 10 Q 0 10 0 6 Q 0 2 4 2 M 8 10 L 8 12 L 5 9 L 8 6 L 8 8 Q 10 8 10 6 Q 10 4 8 4 L 8 2 Q 12 2 12 6 Q 12 10 8 10 z" });
-const loopButton: HTMLButtonElement = button({ title: "loop", class: "spIcon loopIcon", style: "background: none; flex: 0 0 12px; margin: 0 3px; width: 12px; height: 12px; display: flex;" }, svg({ width: 12, height: 12, viewBox: "0 0 12 12" },
-    loopIcon,
-));
 
 
 const volumeIcon: SVGSVGElement = svg({ class: "spIcon volumeIcon", style: "flex: 0 0 12px; margin: 0 1px; width: 12px; height: 12px;", viewBox: "0 0 12 12" },
@@ -224,16 +203,6 @@ const volumeIcon: SVGSVGElement = svg({ class: "spIcon volumeIcon", style: "flex
 );
 
 const volumeSlider: HTMLInputElement = input({ title: "volume", type: "range", value: 75, min: 0, max: 75, step: 1, style: "width: 12vw; max-width: 100px; margin: 0 1px;" });
-
-const zoomIcon: SVGSVGElement = svg({ class: "spIcon zoomIcon", width: 12, height: 12, viewBox: "0 0 12 12" },
-    circle({ cx: "5", cy: "5", r: "4.5", "stroke-width": "1", stroke: "currentColor", fill: "none" }),
-    path({ stroke: "currentColor", "stroke-width": "2", d: "M 8 8 L 11 11 M 5 2 L 5 8 M 2 5 L 8 5", fill: "none" }),
-);
-const zoomButton2: HTMLButtonElement = button({ title: "zoom", style: "background: #581b3e; width: 100%; height: 100%; display: none;" }, "Zoom");
-const zoomButton: HTMLButtonElement = button({ title: "zoom", style: "background: none; flex: 0 0 12px; margin: 0 3px; width: 12px; height: 12px; display: flex;" },
-    zoomIcon,
-    zoomButton2,
-);
 
 const timeline: SVGSVGElement = svg({ class: "timeline", style: "min-width: 0; min-height: 0; touch-action: pan-y pinch-zoom;" });
 const playhead: HTMLDivElement = div({ class: "playhead", style: `position: absolute; left: 0; top: 0; width: 2px; height: 100%; background: ${ColorConfig.playhead}; pointer-events: none;` });
@@ -246,102 +215,31 @@ let currentNoteFlashElements: SVGPathElement[] = [];
 let currentNoteFlashBar: number = -1;
 const notesFlashWhenPlayed: boolean = getLocalStorage("notesFlashWhenPlayed") == "true";
 
-const outVolumeBarBg: SVGRectElement = SVG.rect({ "pointer-events": "none", width: "90%", height: "50%", x: "5%", y: "25%", fill: ColorConfig.uiWidgetBackground });
-const outVolumeBar: SVGRectElement = SVG.rect({ "pointer-events": "none", height: "50%", width: "0%", x: "5%", y: "25%", fill: "url('#volumeGrad2')" });
-const outVolumeCap: SVGRectElement = SVG.rect({ "pointer-events": "none", width: "2px", height: "50%", x: "5%", y: "25%", fill: ColorConfig.uiWidgetFocus });
-const stop1: SVGStopElement = SVG.stop({ "stop-color": "lime", offset: "60%" });
-const stop2: SVGStopElement = SVG.stop({ "stop-color": "orange", offset: "90%" });
-const stop3: SVGStopElement = SVG.stop({ "stop-color": "red", offset: "100%" });
-const gradient: SVGGradientElement = SVG.linearGradient({ id: "volumeGrad2", gradientUnits: "userSpaceOnUse" }, stop1, stop2, stop3);
-const defs: SVGDefsElement = SVG.defs({}, gradient);
-const volumeBarContainer: SVGSVGElement = SVG.svg({ style: `touch-action: none; overflow: hidden; margin: auto;`, width: "160px", height: "10px", preserveAspectRatio: "none" },
-    defs,
-    outVolumeBarBg,
-    outVolumeBar,
-    outVolumeCap,
-);
-
-const sampleLoadingBar: HTMLDivElement = div({ style: `width: 0%; height: 100%; background-color: ${ColorConfig.indicatorPrimary};` });
-const sampleFailedBar: HTMLDivElement = div({ style: `width: 0%; height: 100%; background-color: ${ColorConfig.sampleFailed};` });
-const sampleLoadingBarContainer: HTMLDivElement = div({ class: `sampleLoadingContainer`, style: `overflow: hidden; margin: auto; width: 90%; height: 50%; background-color: var(--empty-sample-bar, ${ColorConfig.indicatorSecondary});` }, sampleLoadingBar, sampleFailedBar);
-const sampleLoadingStatusContainer: HTMLDivElement = div({},
-    div({ class: "selectRow", style: "overflow: hidden; margin: auto; width: 160px; height: 10px; " },
-        sampleLoadingBarContainer,
-    ),
-);
-
-const timelineBarProgress: HTMLDivElement = div({ class: `timeline-bar-progress`, style: `overflow: hidden; width: 5%; height: 100%; z-index: 5;` });
-const timelineBar: HTMLDivElement = div({ style: `overflow: hidden; height: 100%; margin: auto; background: var(--ui-widget-background);` }, timelineBarProgress);
-const timelineBarContainer: HTMLDivElement = div({ style: `overflow: hidden; height: 4px; ` }, timelineBar);
-const volumeBarContainerDiv: HTMLDivElement = div({ class: `volBarContainer`, style: "display:flex; flex-direction:column;" }, volumeBarContainer, sampleLoadingStatusContainer);
 const promptContainer: HTMLDivElement = div({ class: "promptContainer", style: "display:none; backdrop-filter: saturate(1.5) blur(4px); width: 100%; height: 100%; position: fixed; z-index: 999; display: flex; justify-content: center; align-items: center;" });
 promptContainer.style.display = "none";
 
-const inputRepeatList = input({ type: "checkbox", id: "plctrlRepeatList" });
-const inputShuffleList = input({ type: "checkbox", id: "plctrlShuffleList" });
-const inputRepeatSong = input({ type: "checkbox", id: "plctrlRepeatSong" });
-const nextSongButton = button({ class: "plctrlNextSong" }, "Skip Song");
-
-// const controls = div(
-//     div({ cass: "plctrl" },
-//         nextSongButton,
-//         div(
-//             inputRepeatList,
-//             label({ "for": "plctrlRepeatList" }, "Repeat Playlist"),
-//         ),
-//         div(
-//             inputShuffleList,
-//             label({ "for": "plctrlShuffleList" }, "Shuffle Playlist"),
-//         ),
-//         div(
-//             inputRepeatSong,
-//             label({ "for": "plctrlRepeatSong" }, "Repeat Song"),
-//         ),
-//     ),
-// );
+const nextSongButton = button({ class: "plctrlNextSong", style: "width: 100%; height: 100%; max-height: 50px;" }, "Skip Song");
+const inputRepeatList = input({ type: "checkbox" });
+const inputShuffleList = input({ type: "checkbox" });
+const inputRepeatSong = input({ type: "checkbox" });
 
 const songPlayerContainer: HTMLDivElement = div({ class: "songPlayerContainer" });
 songPlayerContainer.appendChild(visualizationContainer);
 songPlayerContainer.appendChild(pianoContainer);
-songPlayerContainer.appendChild(timelineBarContainer);
 songPlayerContainer.appendChild(
     div({ class: "control-center", id: "control-center", style: `flex-shrink: 0; height: 20vh; min-height: 22px; max-height: 70px; display: flex; align-items: center; grid-area: control-center;` },
         div({ class: "control-center row", id: "row1", style: `display: flex; align-items: center;` },
             playButtonContainer,
-            // controls,
             nextSongButton,
-            div(
-                inputRepeatList,
-                label({ "for": "plctrlRepeatList" }, "Repeat Playlist"),
-            ),
-            div(
-                inputShuffleList,
-                label({ "for": "plctrlShuffleList" }, "Shuffle Playlist"),
-            ),
-            div(
-                inputRepeatSong,
-                label({ "for": "plctrlRepeatSong" }, "Repeat Song"),
-            ),
-            loopButton,
+            label({ class: "plctrlCheckbox" }, inputRepeatList, "Repeat Playlist"),
+            label({ class: "plctrlCheckbox" }, inputShuffleList, "Shuffle Playlist"),
+            label({ class: "plctrlCheckbox" }, inputRepeatSong, "Repeat Song"),
             volumeIcon,
             volumeSlider,
-            zoomButton,
-            volumeBarContainerDiv,
-            oscilascope.canvas, //make it auto remove itself later
-        ),
-        div({ class: "control-center row", id: "row2", style: `display: flex; align-items: center;` },
-            titleText,
-            layoutStuffs,
-            editLink,
-            copyLink,
-            shareLink,
-            shortenSongLink,
-        ),
-        div({ class: "control-center row", id: "row3", style: `display: flex; align-items: center;` },
+            titleText
         ),
     ),
 );
-
 
 document.body.appendChild(songPlayerContainer);
 songPlayerContainer.appendChild(promptContainer);
@@ -349,25 +247,14 @@ promptContainer.appendChild(layoutContainer);
 
 if (isMobile) {
     const controlCenterId = document.getElementById('control-center');
-    const controlCenterRow3 = document.getElementById('row3');
-    oscilascope.canvas.style.display = 'none';
-    copyLink.style.display = "none";
     controlCenterId!.style.flexDirection = "column";
     layoutStuffs.style.height = "24px";
-    zoomButton2.style.display = "unset";
-    zoomIcon.style.display = "none";
-    zoomButton.style.width = "48px";
-    zoomButton.style.height = "19px";
-    zoomButton.style.flex = "unset";
-    controlCenterRow3?.appendChild(titleText);
 } else {
     const controlCenterId = document.getElementById('control-center');
     const controlCenterRow1 = document.getElementById('row1');
-    const controlCenterRow3 = document.getElementById('row3');
     controlCenterId!.style.alignItems = "unset";
     controlCenterId!.style.justifyContent = "space-between";
     controlCenterRow1?.appendChild(titleText);
-    controlCenterRow3!.style.display = "none";
 }
 
 // Some browsers have an option to "block third-party cookies" (it's enabled by
@@ -412,14 +299,6 @@ function removeFromUnorderedArray<T>(array: T[], index: number): void {
 function loadSong(songString: string, reuseParams: boolean): void {
     synth.setSong(songString);
     synth.snapToStart();
-    const updatedSongString: string = synth.song!.toBase64String();
-    editLink.href = "../#" + updatedSongString;
-    //@jummbus - these lines convert old url vers loaded into the player to the new url ver. The problem is, if special chars are included,
-    // they appear to get double-encoded (e.g. the '%' in %20 is encoded again), which breaks the link. Disabled for now until I have a chance
-    // to look into it more.
-    //const hashQueryParams = new URLSearchParams(reuseParams ? location.hash.slice(1) : "");
-    //hashQueryParams.set("song", updatedSongString);
-    //location.hash = hashQueryParams.toString();
 }
 
 function hashUpdatedExternally(): void {
@@ -432,8 +311,6 @@ function hashUpdatedExternally(): void {
         myHash = myHash.substring(1);
     }
 
-
-    fullscreenLink.href = location.href;
 
     // @TODO: This can be moved back into splitting merely on & once samples
     // are reworked so that the URLs don't clash with the overall URL syntax
@@ -466,7 +343,6 @@ function hashUpdatedExternally(): void {
                 //	break;
                 case "loop":
                     synth.loopRepeatCount = (value != "1") ? 0 : -1;
-                    renderLoopIcon();
                     break;
             }
         } else {
@@ -480,11 +356,6 @@ function hashUpdatedExternally(): void {
 function onWindowResize(): void {
     piano.style.width = "0";
     renderTimeline();
-}
-
-function shortenSongPlayerUrl(): void {
-    let shortenerStrategy: string = "https://tinyurl.com/api-create.php?url=";
-    window.open(shortenerStrategy + encodeURIComponent(new URL("#song=" + synth.song!.toBase64String(), location.href).href));
 }
 
 let pauseIfAnotherPlayerStartsHandle: ReturnType<typeof setInterval> | null = null;
@@ -506,41 +377,11 @@ function animate(): void {
     if (synth.playing) {
         animationRequest = requestAnimationFrame(animate);
         renderPlayhead();
-
-        volumeUpdate();
     }
     if (pauseButtonDisplayed != synth.playing) {
         renderPlayButton();
     }
 
-}
-
-function volumeUpdate(): void {
-    if (synth.song == null) {
-        outVolumeCap.setAttribute("x", "5%");
-        outVolumeBar.setAttribute("width", "0%");
-        return;
-    }
-    outVolumeHistoricTimer--;
-    if (outVolumeHistoricTimer <= 0) {
-        outVolumeHistoricCap -= 0.03;
-    }
-    if (synth.song.outVolumeCap > outVolumeHistoricCap) {
-        outVolumeHistoricCap = synth.song.outVolumeCap;
-        outVolumeHistoricTimer = 50;
-    }
-
-    animateVolume(synth.song.outVolumeCap, outVolumeHistoricCap);
-
-    if (!synth.playing) {
-        outVolumeCap.setAttribute("x", "5%");
-        outVolumeBar.setAttribute("width", "0%");
-    }
-}
-
-function animateVolume(useOutVolumeCap: number, historicOutCap: number): void {
-    outVolumeBar.setAttribute("width", "" + Math.min(144, useOutVolumeCap * 144));
-    outVolumeCap.setAttribute("x", "" + (8 + Math.min(144, historicOutCap * 144)));
 }
 
 function onTogglePlay(force?: boolean): void {
@@ -549,7 +390,6 @@ function onTogglePlay(force?: boolean): void {
         animationRequest = null;
         if ((force === undefined && synth.playing) || (force === false)) {
             synth.pause();
-            volumeUpdate();
         } else {
             synth.play();
             setLocalStorage("playerId", id);
@@ -567,31 +407,6 @@ function onLayoutButton(): void {
     promptContainer.style.display = "flex";
 }
 
-function updateSampleLoadingBar(_e: Event): void {
-    // @TODO: Avoid this cast and type EventTarget/Event properly.
-    const e: SampleLoadedEvent = <SampleLoadedEvent>_e;
-    let sampleNum: boolean = false;
-    const percent: number = (
-        e.totalSamples === 0
-            ? 0
-            : Math.floor((e.samplesLoaded / e.totalSamples) * 100)
-    );
-    const failedPercent: number = (
-        e.totalSamples === 0
-            ? 0
-            : Math.floor((e.samplesFailed / e.totalSamples) * 100)
-    );
-    sampleNum = Boolean(percent > 0 && failedPercent > 0);
-    sampleLoadingBarContainer.title = "Total Samples: " + String(e.totalSamples) + "; Loaded Samples: " + String(e.samplesLoaded) + "; Samples Failed: " + String(e.samplesFailed) + ";";
-    sampleLoadingBar.style.width = `${percent}%`;
-    sampleFailedBar.style.width = `${failedPercent + Number(sampleNum)}%`;
-    if (e.totalSamples != 0) {
-        sampleLoadingBarContainer.style.backgroundColor = "var(--indicator-secondary)";
-    } else {
-        sampleLoadingBarContainer.style.backgroundColor = "var(--empty-sample-bar, var(--indicator-secondary))";
-    }
-}
-
 function onExitButton(): void {
     promptContainer.style.display = "none";
 }
@@ -605,34 +420,13 @@ function onLayoutPicked(): void {
 
 // The end of the layout event code.
 
-function onToggleLoop(): void {
-    if (synth.loopRepeatCount == -1) {
-        synth.loopRepeatCount = 0;
-    } else {
-        synth.loopRepeatCount = -1;
-    }
-    renderLoopIcon();
-}
-
 function onVolumeChange(): void {
     setLocalStorage("volume", volumeSlider.value);
     setSynthVolume();
 }
 
-function onToggleZoom(): void {
-    zoomEnabled = !zoomEnabled;
-    renderZoomIcon();
-    renderTimeline();
-}
-
 function onTimelineMouseDown(event: MouseEvent): void {
     draggingPlayhead = true;
-    onTimelineMouseMove(event);
-}
-
-function onTimelineBarMouseDown(event: MouseEvent): void {
-    draggingPlayhead = true;
-    draggingTimelineBar = true;
     onTimelineMouseMove(event);
 }
 
@@ -699,13 +493,8 @@ function setSynthVolume(): void {
 }
 
 function renderPlayhead(): void {
-
-    const maxPer = 144;
-
     if (synth.song != null) {
         let pos: number = synth.playhead / synth.song.barCount;
-
-        timelineBarProgress.style.width = Math.round((maxPer * pos / maxPer) * 1000) / 10 + "%";
 
         const usePiano = ((<any>_form.elements)["spLayout"].value == "piano") || (window.localStorage.getItem("spLayout") == "piano");
         const useMiddle = ((<any>_form.elements)["spLayout"].value == "middle") || (window.localStorage.getItem("spLayout") == "middle");
@@ -990,14 +779,6 @@ function renderPlayButton(): void {
     pauseButtonDisplayed = synth.playing;
 }
 
-function renderLoopIcon(): void {
-    loopIcon.setAttribute("fill", (synth.loopRepeatCount == -1) ? ColorConfig.linkAccent : ColorConfig.uiWidgetBackground);
-}
-
-function renderZoomIcon(): void {
-    zoomIcon.style.color = zoomEnabled ? ColorConfig.linkAccent : ColorConfig.uiWidgetBackground;
-}
-
 function onKeyPressed(event: KeyboardEvent): void {
     switch (event.keyCode) {
         case 70: // first bar
@@ -1032,40 +813,6 @@ function onKeyPressed(event: KeyboardEvent): void {
     }
 }
 
-function onCopyClicked(): void {
-    // Set as any to allow compilation without clipboard types (since, uh, I didn't write this bit and don't know the proper types library) -jummbus
-    let nav: any;
-    nav = navigator;
-
-    if (nav.clipboard && nav.clipboard.writeText) {
-        nav.clipboard.writeText(location.href).catch(() => {
-            window.prompt("Copy to clipboard:", location.href);
-        });
-        return;
-    }
-    const textField: HTMLTextAreaElement = document.createElement("textarea");
-    textField.textContent = location.href;
-    document.body.appendChild(textField);
-    textField.select();
-    const succeeded: boolean = document.execCommand("copy");
-    textField.remove();
-    if (!succeeded) window.prompt("Copy this:", location.href);
-}
-
-function onShareClicked(): void {
-    (<any>navigator).share({ url: location.href });
-}
-
-if (top !== self) {
-    // In an iframe.
-    copyLink.style.display = "none";
-    shareLink.style.display = "none";
-} else {
-    // Fullscreen.
-    fullscreenLink.style.display = "none";
-    if (!("share" in navigator)) shareLink.style.display = "none";
-}
-
 if (getLocalStorage("volume") != null) {
     volumeSlider.value = getLocalStorage("volume")!;
 }
@@ -1075,19 +822,12 @@ window.addEventListener("resize", onWindowResize);
 window.addEventListener("keydown", onKeyPressed);
 
 timeline.addEventListener("mousedown", onTimelineMouseDown);
-timelineBar.addEventListener("mousedown", onTimelineBarMouseDown);
 window.addEventListener("mousemove", onTimelineMouseMove);
 window.addEventListener("mouseup", onTimelineCursorUp);
 timeline.addEventListener("touchstart", onTimelineTouchDown);
 timeline.addEventListener("touchmove", onTimelineTouchMove);
 timeline.addEventListener("touchend", onTimelineCursorUp);
 timeline.addEventListener("touchcancel", onTimelineCursorUp);
-
-timelineBar.addEventListener("touchstart", onTimelineTouchDown);
-timelineBar.addEventListener("touchmove", onTimelineTouchMove);
-timelineBar.addEventListener("touchend", onTimelineCursorUp);
-timelineBar.addEventListener("touchcancel", onTimelineCursorUp);
-
 
 document.addEventListener('visibilitychange', e => {
     if (document.visibilityState === 'visible') {
@@ -1104,18 +844,10 @@ layoutStuffs.addEventListener("click", onLayoutButton);
 closePrompt.addEventListener("click", onExitButton);
 _okayButton.addEventListener("click", onLayoutPicked);
 playButton.addEventListener("click", () => onTogglePlay(undefined));
-loopButton.addEventListener("click", onToggleLoop);
 volumeSlider.addEventListener("input", onVolumeChange);
-zoomButton.addEventListener("click", onToggleZoom);
-copyLink.addEventListener("click", onCopyClicked);
-shareLink.addEventListener("click", onShareClicked);
 window.addEventListener("hashchange", hashUpdatedExternally);
-shortenSongLink.addEventListener("click", shortenSongPlayerUrl);
-sampleLoadEvents.addEventListener("sampleloaded", updateSampleLoadingBar.bind(this));
 
 hashUpdatedExternally();
-renderLoopIcon();
-renderZoomIcon();
 renderPlayButton();
 
 // When compiling synth.ts as a standalone module named "beepbox", expose these classes as members to JavaScript:
