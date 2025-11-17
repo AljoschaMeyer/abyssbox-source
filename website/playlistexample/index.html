@@ -92,6 +92,14 @@
                 transform: scale(1);
             }
         }
+
+        .songPlayerContainer {
+            max-height: 300px;
+        }
+
+        .songPlayerContainer svg>path {
+            filter: brightness(0.8) saturate(0.8);
+        }
     </style>
 </head>
 <!--<script test="beepbox_editor.js" src="samples.js"></script>-->
@@ -113,19 +121,11 @@
             A very short test song.
         </div>
 
-        <div data-beepbox-song="a3N0fAnotherTestsong00000Y04nonen100s0k02l00e00t1Ua7g00j07r3Z1O_U00i0o3T1v0pu01f0418a2i42a22k400q00000B010w4000Oaad0a0A9F3B9Q4487Pdd00R12610E1c0624b4p1oFAuwwo6B1kGteFoEQql6Ohw0"
+        <div data-beepbox-song="g4N07Unnamedn610s0k7l01e0tt0Wa5g0uj0qr3O_U00000000000000i0o443121T1v0pu01f134q0516avd230A1F0B2Q64d4Pb530R0000E162cT1v0pu01f134q0510aod230A1F0B2Q64d4Pb530R0000E162cT1v0pu01f134q050Waod230A1F0B2Q64d4Pb530R0000E162cT1v0pu01f134q050Qaod230A1F0B2Q64d4Pb530R0000E162cT1v0pu01f134q050Kaod230A1F0B2Q64d4Pb530R0000E162cT1v0pu01f134q050Eaod230A1F0B2Q64d4Pb530R0000E162cT2v0pu15f180q040Oad030w0E0b28pwy8kW4GmM06Xs-4oNBmRVQ200i008pj7gBg0boRPUhBeBrnM000A00gOCexaBIqVY8OBakWlLo001800xBct2l001o000NHDMzatg02g013aoW4G002SdsZXTMz80000gE0y6oW4Gm036w003DMzao0000000000000000000000000000p2i8FCLH2-8O_h5ZcLFDy-1iZcX_8QPnQ9Q-zeDD7FD7Vuq-16LjeDMb0YwE6LdtcLR-9W4U-Cgqwa22j5SaappI1rsa52B0Jxijcbh89NWoKR0SbJGRqG9BeyCbHXiOCmqomm5FSV2DpLQqcxtAp6gwatj0aZyFAjGLA4LMsDjFQPNv0Gp7I82KhQyePiLAtEzMGgAaBmJiFkGOpvAVuCt_y6nTdMnyCgrUay5i2ExkgANteBAwAPnQ2eCubWanFDvVaCq-xeDQpQYRQPFYMjzQO_gdvPdU6kPnCLMDjefQ9NZcwOoaI5g2jbc25wolo9cniwcA4ComygkO3h1k0E89cCS0ANtbggGMnB0zCmCbAV2gLicz8Qqle_mHQQODhV0TRNcIT3qN2BuA92LoEQH6GHmaCheGD7FB-z8lZ8CsvEFB-zhQmhOlaCubWOnFDvW4Lwd0nPFQOf2gc19raRrImrBaACq-AapULytbQPLYBjdvgDjWcWunUMiZcU_gduqWpQ-zA1HPnAKgD7QO3bwEgaw4Cmo4b0gHoioKDjOgipxq91j8dc5g2wgAOr8x9yWmU2Ex9CLE4vbwGUl09cIRwIC5o2UDjOgnki3AMl0aK5RsbymV2Extg8WoKEA92V8O56z8icx8Od60Glo2Njjat7DeCG-4PDI2KMc1wk30ksyonk0G8mg2jbZ2CubW6nFDvW4LFo0nQOfhl92LoAqipMuBdv4adaFl8Wp65cYnNAFuCt_AGpHW4WvhDjZoAWtcLMcBR4Ctfxu2GOpvAqvA5jefQ9NYUdcwOwipMu48WpBVpQ6ChXA0Cgo0bNxQ1N78-kpuCt_Hi-NbU3k5YLj8YQgd63w99cLOFvbY8atihGAsMAs6h-O0tfkOPc8o7jwkPNv5anFDvVeCq-xeDQpQYWumDjFB-lAWpQ-hq5MkqYRYH8kPzZ2sveDj8c44CnU8zDvFxpCwo4aw5g2Sgl89cFQPIYx8V05j2F1ggippE65P0aA5A0KokPNvgOZcX_sBZX8yY0jLQO_4JcYnMGCq-xeDU2V2tfe_jbYBjeDQNHPnCfE28tPpY0GpN-xefCmCgo4a32E19Beh5O8lMay4CbEmGpxq8wj8d4aw5k2AwL617e_Yov5dB4Lje_OsLwsybM000000"
             data-beepbox-repetitions="2" data-beepbox-fadeout="10000">
             Another test song.
         </div>
     </div>
-
-    <script>
-
-        if (location.pathname.startsWith("/abyssbox-source/website/")) {
-            location.pathname = "/abyssbox-testing/" + location.pathname.slice("/abyssbox-source/website/".length);
-        }
-
-    </script>
 
     <script type="text/javascript">
         function browserHasRequiredFeatures() {

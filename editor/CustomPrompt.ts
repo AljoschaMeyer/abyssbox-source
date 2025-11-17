@@ -864,7 +864,7 @@ export class CustomPrompt implements Prompt {
 
 				const reader: FileReader = new FileReader();
 				reader.addEventListener("load", (event: Event): void => {
-					ColorConfig.setTheme("AbyssBox Classic");
+					ColorConfig.setTheme("wormblossom");
 					let content = <string>reader.result;
 					console.log(content);
 					window.localStorage.setItem("customColors", content);	

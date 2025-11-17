@@ -187,13 +187,13 @@ const layoutContainer: HTMLDivElement = div({ class: "prompt noSelection", style
     closePrompt,
 );
 
-let titleText: HTMLHeadingElement = h1({ class: "songTitle", style: "flex-grow: 1; margin: 0 1px; margin-left: 10px; overflow: hidden;" }, "");
+let titleText: HTMLHeadingElement = h1({ class: "songTitle" }, "");
 let layoutStuffs: HTMLButtonElement = button({ class: "songPlayerLayoutsButton", style: "margin: 0 4px; height: 42px; width: 90px;" }, "Layouts");
 
 let draggingPlayhead: boolean = false;
 let draggingTimelineBar: boolean = false;
-const playButton: HTMLButtonElement = button({ style: "width: 100%; height: 100%; max-height: 50px;" });
-const playButtonContainer: HTMLDivElement = div({ class: "playButtonContainer", style: "flex-shrink: 0; display: flex; padding: 2px; width: 80px; height: 100%; box-sizing: border-box; align-items: center;" },
+const playButton: HTMLButtonElement = button();
+const playButtonContainer: HTMLDivElement = div({ class: "playButtonContainer" },
     playButton,
 );
 
@@ -218,7 +218,7 @@ const notesFlashWhenPlayed: boolean = getLocalStorage("notesFlashWhenPlayed") ==
 const promptContainer: HTMLDivElement = div({ class: "promptContainer", style: "display:none; backdrop-filter: saturate(1.5) blur(4px); width: 100%; height: 100%; position: fixed; z-index: 999; display: flex; justify-content: center; align-items: center;" });
 promptContainer.style.display = "none";
 
-const nextSongButton = button({ class: "plctrlNextSong", style: "width: 100%; height: 100%; max-height: 50px;" }, "Skip Song");
+const nextSongButton = button({ class: "plctrlNextSong" }, "Next");
 const inputRepeatList = input({ type: "checkbox" });
 const inputShuffleList = input({ type: "checkbox" });
 const inputRepeatSong = input({ type: "checkbox" });
@@ -227,17 +227,15 @@ const songPlayerContainer: HTMLDivElement = div({ class: "songPlayerContainer" }
 songPlayerContainer.appendChild(visualizationContainer);
 songPlayerContainer.appendChild(pianoContainer);
 songPlayerContainer.appendChild(
-    div({ class: "control-center", id: "control-center", style: `flex-shrink: 0; height: 20vh; min-height: 22px; max-height: 70px; display: flex; align-items: center; grid-area: control-center;` },
-        div({ class: "control-center row", id: "row1", style: `display: flex; align-items: center;` },
-            playButtonContainer,
-            nextSongButton,
-            label({ class: "plctrlCheckbox" }, inputRepeatList, "Repeat Playlist"),
-            label({ class: "plctrlCheckbox" }, inputShuffleList, "Shuffle Playlist"),
-            label({ class: "plctrlCheckbox" }, inputRepeatSong, "Repeat Song"),
-            volumeIcon,
-            volumeSlider,
-            titleText
-        ),
+    div({ class: "control-center", id: "control-center" },
+        playButtonContainer,
+        nextSongButton,
+        label({ class: "plctrlCheckbox" }, inputShuffleList, "Shuffle"),
+        label({ class: "plctrlCheckbox" }, inputRepeatList, "Loop Playlist"),
+        label({ class: "plctrlCheckbox" }, inputRepeatSong, "Loop Song"),
+        volumeIcon,
+        volumeSlider,
+        titleText
     ),
 );
 
@@ -328,12 +326,12 @@ function hashUpdatedExternally(): void {
                         if (synth.song != null) {
                             if (synth.song.setSongTheme != null) {
                                 if (synth.song?.setSongTheme == "none") {
-                                    ColorConfig.setTheme(colorTheme === null ? "AbyssBox Classic" : colorTheme);
+                                    ColorConfig.setTheme(colorTheme === null ? "wormblossom" : colorTheme);
                                 } else {
                                     ColorConfig.setTheme(synth.song.setSongTheme);
                                 }
                             } else {
-                                ColorConfig.setTheme(colorTheme === null ? "AbyssBox Classic" : colorTheme);
+                                ColorConfig.setTheme(colorTheme === null ? "wormblossom" : colorTheme);
                             }
                         }
                     }
@@ -885,7 +883,10 @@ document.querySelectorAll('[data-beepbox-song]').forEach((songDom_) => {
         fadeout: songDom.dataset.beepboxFadeout ? parseInt(songDom.dataset.beepboxFadeout) : -1,
     }
 
+    const i = playlist.length;
     playlist.push(song);
+
+    songDom.addEventListener("click", () => selectSongByIndex(i));
 });
 
 let currentSongIndex = 0;

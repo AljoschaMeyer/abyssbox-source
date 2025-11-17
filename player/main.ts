@@ -410,11 +410,11 @@ import { SongPlayerLayout } from "./Layout";
 							if (synth.song != null) {
 								if (synth.song.setSongTheme != null) {
 								if (synth.song?.setSongTheme == "none") {
-									ColorConfig.setTheme(colorTheme === null ? "AbyssBox Classic" : colorTheme); } else {
+									ColorConfig.setTheme(colorTheme === null ? "wormblossom" : colorTheme); } else {
 									ColorConfig.setTheme(synth.song.setSongTheme);
 									}
 								} else {
-									ColorConfig.setTheme(colorTheme === null ? "AbyssBox Classic" : colorTheme); 
+									ColorConfig.setTheme(colorTheme === null ? "wormblossom" : colorTheme); 
 								}
 							}
 						}

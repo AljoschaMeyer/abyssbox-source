@@ -9683,7 +9683,7 @@ export class Synth {
 
     public fadeout(): void {
         this.gainNode.gain.setValueCurveAtTime(logsCurve, 0, this.fadeoutMilliseconds / 1000);
-        // this.gainNode.gain.linearRampToValueAtTime(0.01, this.fadeoutMilliseconds / 1000);
+        
         setTimeout(() => {
             this.pause();
             this.currentLoopCount = 0;
